@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Batch Manager - Dr. Bilal Ahmed</title>
+  <!-- QRCode.js library for 2D barcode generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    :root {
+      --primary-teal: #0f766e;
+      --primary-dark: #115e59;
+      --emerald-accent: #059669;
+      --cyan-bright: #06b6d4;
+      --primary-gradient: linear-gradient(135deg, #0d9488 0%, #0f766e 50%, #047857 100%);
+      --accent-gradient: linear-gradient(135deg, #06b6d4 0%, #10b981 100%);
+      --card-bg: rgba(255, 255, 255, 0.96);
+      --border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --error: #ef4444;
+      --success: #10b981;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* Page Body with Dual Background Images (Manufacturing Left, Quality Control Right) */
+    body {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+      background-color: #e0f2fe;
+    }
+
+    /* Split Background Panels */
+    body::before, body::after {
+      content: "";
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      width: 50%;
+      z-index: -1;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      filter: brightness(0.85) contrast(1.05);
+    }
+
+    /* Left Side: Pharmaceutical Manufacturing Machine (Compression / Production Line) */
+    body::before {
+      left: 0;
+      background-image: linear-gradient(to right, rgba(15, 118, 110, 0.65), rgba(15, 118, 110, 0.85)),
+                        url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80');
+      border-right: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    /* Right Side: Quality Control & Analytical Testing Machines (HPLC / Micro Lab) */
+    body::after {
+      right: 0;
+      background-image: linear-gradient(to left, rgba(4, 120, 87, 0.65), rgba(15, 118, 110, 0.85)),
+                        url('https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=1200&q=80');
+      border-left: 2px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .app-card {
+      width: 100%;
+      max-width: 600px;
+      background: var(--card-bg);
+      border-radius: 20px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35), 0 0 30px rgba(15, 118, 110, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      overflow: hidden;
+      position: relative;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(180deg, rgba(15, 118, 110, 0.92) 0%, rgba(4, 120, 87, 0.95) 100%),
+                  url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
+      color: #ffffff;
+      padding: 28px 20px 22px 20px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .pharma-icon-badge {
+      width: 65px;
+      height: 65px;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 50%;
+      margin: 0 auto 10px auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      backdrop-filter: blur(4px);
+    }
+
+    .header-title {
+      font-size: 1.6rem;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+    }
+
+    .contact-pill-box {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      margin-top: 4px;
+    }
+
+    .header-email, .header-phone {
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 4px 14px;
+      border-radius: 20px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .header-phone {
+      background: rgba(0, 0, 0, 0.4);
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+    }
+
+    /* Admin Button */
+    .header-top-actions {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+    }
+
+    .header-btn {
+      background: rgba(0, 0, 0, 0.35);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      backdrop-filter: blur(6px);
+      transition: background 0.2s;
+    }
+
+    .header-btn:hover {
+      background: rgba(0, 0, 0, 0.55);
+    }
+
+    /* Trial Info Notice */
+    .trial-badge {
+      background-color: #f0fdf4;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      margin-bottom: 22px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Sheet Containers */
+    .sheet-page {
+      padding: 30px;
+      display: none;
+      animation: slideIn 0.4s ease-out;
+    }
+
+    .sheet-page.active {
+      display: block;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2.sheet-title {
+      font-size: 1.3rem;
+      color: #0f766e;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .step-icon-svg {
+      width: 28px;
+      height: 28px;
+      fill: #0f766e;
+      flex-shrink: 0;
+    }
+
+    p.sheet-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 22px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="number"],
+    input[type="tel"] {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.25s;
+      background: #f8fafc;
+    }
+
+    input:focus {
+      background: #ffffff;
+      border-color: #0f766e;
+      box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.15);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 14px;
+      background: var(--primary-gradient);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(15, 118, 110, 0.3);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(15, 118, 110, 0.4);
+    }
+
+    .btn-accent {
+      background: var(--accent-gradient);
+      box-shadow: 0 6px 18px rgba(6, 182, 212, 0.3);
+    }
+
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      margin-top: 10px;
+    }
+
+    .btn-danger {
+      background: #ef4444;
+      color: white;
+      margin-top: 10px;
+    }
+
+    /* Sub Tabs */
+    .tab-nav {
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid #f1f5f9;
+      margin-bottom: 20px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 8px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+    }
+
+    .tab-btn.active {
+      color: #0f766e;
+      border-bottom-color: #0f766e;
+    }
+
+    .tab-pane {
+      display: none;
+    }
+
+    .tab-pane.active {
+      display: block;
+    }
+
+    /* Unique ID Container */
+    .id-card-container {
+      background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
+      border: 2px dashed #0d9488;
+      border-radius: 14px;
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .unique-id-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+
+    .unique-id-text {
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0f766e;
+      letter-spacing: 1px;
+      word-break: break-all;
+    }
+
+    .btn-copy {
+      background: #ccfbf1;
+      color: #0f766e;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .barcode-wrapper {
+      display: inline-block;
+      padding: 12px;
+      background: #ffffff;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+
+    .data-summary {
+      background-color: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      font-size: 0.88rem;
+      margin-bottom: 20px;
+    }
+
+    .summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 6px 0;
+    }
+
+    .summary-row:not(:last-child) {
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Audit Log Table */
+    .audit-table-wrapper {
+      max-height: 300px;
+      overflow-y: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    table.audit-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+    }
+
+    table.audit-table th, table.audit-table td {
+      padding: 8px 10px;
+      border: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    table.audit-table th {
+      background-color: #f1f5f9;
+      position: sticky;
+      top: 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-card">
+    <!-- Header Banner -->
+    <div class="header-banner">
+      <div class="header-top-actions">
+        <button class="header-btn" onclick="promptBackendAccess(event)">🔒 Admin Portal</button>
+      </div>
+
+      <!-- Pharmaceutical Icon SVG -->
+      <div class="pharma-icon-badge">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0f766e" width="36" height="36">
+          <path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15zM10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z"/>
+          <path d="M6 6l12 12M18 6L6 18" stroke="#0f766e" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </div>
+
+      <div class="header-title">Dr. Bilal Ahmed</div>
+      
+      <div class="contact-pill-box">
+        <div class="header-email">✉️ bilalktk969@gmail.com</div>
+        <div class="header-phone">📞 03473880610</div>
+      </div>
+    </div>
+
+    <!-- SHEET 1: AUTHENTICATION & TRIAL REGISTRATION -->
+    <div class="sheet-page active" id="sheet-1">
+      <div class="trial-badge">
+        ✨ <span><strong>Notice:</strong> This system is configured for your trial evaluation.</span>
+      </div>
+
+      <h2 class="sheet-title">
+        <svg class="step-icon-svg" viewBox="0 0 24 24">
+          <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+        </svg>
+        Step 1: User Verification
+      </h2>
+      <p class="sheet-desc">Enter your factory and contact information to proceed.</p>
+
+      <form id="auth-form">
+        <div class="form-group">
+          <label for="pharma-name">Pharma Factory Name</label>
+          <input type="text" id="pharma-name" placeholder="enter your pharma name" required />
+        </div>
+        <div class="form-group">
+          <label for="phone-number">Phone Number / User ID</label>
+          <input type="tel" id="phone-number" placeholder="enter your phone number" required />
+        </div>
+        <button type="submit" class="btn-primary">Proceed Next ➔</button>
+      </form>
+    </div>
+
+    <!-- SHEET 2: PRODUCT DATA ENTRY -->
+    <div class="sheet-page" id="sheet-2">
+      <h2 class="sheet-title">
+        <svg class="step-icon-svg" viewBox="0 0 24 24">
+          <path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15zM10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z"/>
+        </svg>
+        Step 2: Batch & Packaging Specs
+      </h2>
+      <p class="sheet-desc">Fill in product specs across the tabs below.</p>
+
+      <div class="tab-nav">
+        <button type="button" class="tab-btn active" onclick="switchSubTab('subtab-product', event)">Product Info</button>
+        <button type="button" class="tab-btn" onclick="switchSubTab('subtab-packaging', event)">Packaging Specs</button>
+      </div>
+
+      <form id="specs-form">
+        <!-- Sub-Tab 1 -->
+        <div class="tab-pane active" id="subtab-product">
+          <div class="form-group">
+            <label for="product-name">Product Name</label>
+            <input type="text" id="product-name" placeholder="e.g. Paracetamol" required />
+          </div>
+          <div class="form-group">
+            <label for="batch-number">Batch Number</label>
+            <input type="text" id="batch-number" placeholder="e.g. BATCH-2026-001" required />
+          </div>
+          <div class="form-group">
+            <label for="strength">Strength</label>
+            <input type="text" id="strength" placeholder="e.g. 500mg" required />
+          </div>
+          <button type="button" class="btn-primary" onclick="switchSubTab('subtab-packaging')">Next: Packaging Specs ➔</button>
+        </div>
+
+        <!-- Sub-Tab 2 -->
+        <div class="tab-pane" id="subtab-packaging">
+          <div class="form-group">
+            <label for="primary-length">Length of Primary Packaging (mm)</label>
+            <input type="number" step="0.1" id="primary-length" placeholder="e.g. 105.5" required />
+          </div>
+          <div class="form-group">
+            <label for="secondary-length">Length of Secondary Packaging (mm)</label>
+            <input type="number" step="0.1" id="secondary-length" placeholder="e.g. 110.0" required />
+          </div>
+          <button type="submit" class="btn-primary btn-accent">Proceed Next ➔</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SHEET 3: UNIQUE ID & EXPORT OPTIONS -->
+    <div class="sheet-page" id="sheet-3">
+      <h2 class="sheet-title">
+        <svg class="step-icon-svg" viewBox="0 0 24 24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+        Step 3: Unique Code Generated
+      </h2>
+      <p class="sheet-desc">Record successfully generated and stored in system log:</p>
+
+      <div class="id-card-container">
+        <div class="unique-id-box">
+          <span class="unique-id-text" id="final-unique-id">Generating...</span>
+          <button type="button" class="btn-copy" onclick="copyUniqueID()">📋 Copy ID</button>
+        </div>
+
+        <div class="barcode-wrapper">
+          <div id="qrcode-container"></div>
+        </div>
+      </div>
+
+      <div class="data-summary">
+        <div class="summary-row"><span>Pharma Factory:</span> <strong id="sum-pharma">--</strong></div>
+        <div class="summary-row"><span>Phone Number:</span> <strong id="sum-phone">--</strong></div>
+        <div class="summary-row"><span>Product Name:</span> <strong id="sum-product">--</strong></div>
+        <div class="summary-row"><span>Batch Number:</span> <strong id="sum-batch">--</strong></div>
+        <div class="summary-row"><span>Strength:</span> <strong id="sum-strength">--</strong></div>
+        <div class="summary-row"><span>Primary Length:</span> <strong id="sum-primary">--</strong></div>
+        <div class="summary-row"><span>Secondary Length:</span> <strong id="sum-secondary">--</strong></div>
+      </div>
+
+      <div class="action-group">
+        <button type="button" class="btn-primary btn-accent" onclick="exportToWordDoc()">📄 Convert & Export to Word Document (.doc)</button>
+        <button type="button" class="btn-primary btn-secondary" onclick="resetAllSheets()">Start New Batch Entry</button>
+      </div>
+    </div>
+
+    <!-- SECRET BACKEND SHEET -->
+    <div class="sheet-page" id="sheet-backend">
+      <h2 class="sheet-title">🛡️ Hidden Admin Audit Records</h2>
+      <p class="sheet-desc">Master record log of all individual entries submitted across sessions.</p>
+
+      <div class="audit-table-wrapper">
+        <table class="audit-table" id="audit-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Pharma Name</th>
+              <th>Phone</th>
+              <th>Product</th>
+              <th>Batch</th>
+              <th>Unique ID</th>
+            </tr>
+          </thead>
+          <tbody id="audit-table-body">
+            <!-- Dynamic audit rows -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="action-group">
+        <button type="button" class="btn-primary btn-accent" onclick="exportAuditLogToWord()">📄 Export Complete Audit Log to Word</button>
+        <button type="button" class="btn-primary btn-secondary" onclick="exitBackendSheet()">Exit Backend Access</button>
+        <button type="button" class="btn-primary btn-danger" onclick="clearAuditLogs()">⚠️ Clear Audit Logs</button>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    let sessionData = {};
+    let generatedID = "";
+
+    // INITIALIZE LOCAL STORAGE AUDIT ARRAY
+    if (!localStorage.getItem("batchMasterRecords")) {
+      localStorage.setItem("batchMasterRecords", JSON.stringify([]));
+    }
+
+    // SWITCH PUBLIC SHEETS
+    function goToSheet(sheetNum) {
+      document.querySelectorAll('.sheet-page').forEach(el => el.classList.remove('active'));
+      document.getElementById(`sheet-${sheetNum}`).classList.add('active');
+    }
+
+    // SUB-TAB SWITCHER IN SHEET 2
+    function switchSubTab(tabId, evt) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+
+      document.getElementById(tabId).classList.add('active');
+      if (evt) {
+        evt.target.classList.add('active');
+      } else {
+        document.querySelectorAll('.tab-btn')[1].classList.add('active');
+      }
+    }
+
+    // SHEET 1: FORM SUBMISSION
+    document.getElementById('auth-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      sessionData.pharmaName = document.getElementById('pharma-name').value;
+      sessionData.phoneNumber = document.getElementById('phone-number').value;
+      goToSheet(2);
+    });
+
+    // SHEET 2: FORM SUBMISSION
+    document.getElementById('specs-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      sessionData.productName = document.getElementById('product-name').value;
+      sessionData.batchNumber = document.getElementById('batch-number').value;
+      sessionData.strength = document.getElementById('strength').value;
+      sessionData.primaryLength = document.getElementById('primary-length').value + " mm";
+      sessionData.secondaryLength = document.getElementById('secondary-length').value + " mm";
+      sessionData.timestamp = new Date().toLocaleString();
+
+      // Generate Cryptographic Unique ID
+      generatedID = generateSecureUniqueID();
+      sessionData.uniqueID = generatedID;
+
+      // RECORD TO BACKEND AUDIT LOG
+      saveToHiddenDatabase(sessionData);
+
+      // Populate Sheet 3 Summary Display
+      document.getElementById('sum-pharma').innerText = sessionData.pharmaName;
+      document.getElementById('sum-phone').innerText = sessionData.phoneNumber;
+      document.getElementById('sum-product').innerText = sessionData.productName;
+      document.getElementById('sum-batch').innerText = sessionData.batchNumber;
+      document.getElementById('sum-strength').innerText = sessionData.strength;
+      document.getElementById('sum-primary').innerText = sessionData.primaryLength;
+      document.getElementById('sum-secondary').innerText = sessionData.secondaryLength;
+
+      document.getElementById('final-unique-id').innerText = generatedID;
+      render2DBarcode(generatedID);
+
+      goToSheet(3);
+    });
+
+    // GENERATE UNIQUE ID
+    function generateSecureUniqueID(length = 16) {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+      const randomValues = new Uint8Array(length);
+      window.crypto.getRandomValues(randomValues);
+
+      let result = "";
+      for (let i = 0; i < length; i++) {
+        result += chars[randomValues[i] % chars.length];
+      }
+
+      const timeStampHex = Date.now().toString(36).toUpperCase();
+      return `${timeStampHex}-${result}`;
+    }
+
+    // RENDER 2D QR CODE
+    function render2DBarcode(textData) {
+      const container = document.getElementById('qrcode-container');
+      container.innerHTML = "";
+
+      new QRCode(container, {
+        text: textData,
+        width: 130,
+        height: 130,
+        colorDark: "#0f766e",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.H
+      });
+    }
+
+    // COPY ID TO CLIPBOARD
+    function copyUniqueID() {
+      navigator.clipboard.writeText(generatedID).then(() => {
+        const btn = document.querySelector('.btn-copy');
+        btn.innerText = "✅ Copied!";
+        setTimeout(() => { btn.innerText = "📋 Copy ID"; }, 2000);
+      });
+    }
+
+    // SAVE ENTRY TO HIDDEN STORAGE
+    function saveToHiddenDatabase(record) {
+      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
+      logs.push(record);
+      localStorage.setItem("batchMasterRecords", JSON.stringify(logs));
+    }
+
+    // PROMPT ACCESS FOR HIDDEN BACKEND SHEET WITH SECRET CODE: khattak@123
+    function promptBackendAccess(event) {
+      if (event) event.stopPropagation();
+      const accessCode = prompt("Enter Master Admin Passcode:");
+      
+      if (accessCode === "khattak@123") {
+        openBackendSheet();
+      } else if (accessCode !== null) {
+        alert("Access Denied: Incorrect Passcode!");
+      }
+    }
+
+    // OPEN BACKEND SHEET
+    function openBackendSheet() {
+      document.querySelectorAll('.sheet-page').forEach(el => el.classList.remove('active'));
+      document.getElementById('sheet-backend').classList.add('active');
+
+      renderAuditTable();
+    }
+
+    // RENDER AUDIT LOG TABLE
+    function renderAuditTable() {
+      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
+      const tbody = document.getElementById('audit-table-body');
+      tbody.innerHTML = "";
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No backend records found.</td></tr>`;
+        return;
+      }
+
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.timestamp || '--'}</td>
+          <td>${log.pharmaName || '--'}</td>
+          <td>${log.phoneNumber || '--'}</td>
+          <td>${log.productName || '--'}</td>
+          <td>${log.batchNumber || '--'}</td>
+          <td><code>${log.uniqueID || '--'}</code></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // EXIT BACKEND SHEET
+    function exitBackendSheet() {
+      goToSheet(1);
+    }
+
+    // CLEAR AUDIT LOGS
+    function clearAuditLogs() {
+      if (confirm("Are you sure you want to clear all backend audit records?")) {
+        localStorage.setItem("batchMasterRecords", JSON.stringify([]));
+        renderAuditTable();
+      }
+    }
+
+    // EXPORT INDIVIDUAL RECORD TO WORD (.DOC)
+    function exportToWordDoc() {
+      const qrImageTag = document.querySelector("#qrcode-container img");
+      const qrDataUrl = qrImageTag ? qrImageTag.src : "";
+
+      const content = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Product Batch Record - Dr. Bilal Ahmed</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+            h1 { color: #0f766e; border-bottom: 2px solid #0f766e; padding-bottom: 5px; }
+            .header-info { color: #64748b; margin-bottom: 20px; }
+            .id-box { background: #ccfbf1; padding: 15px; font-weight: bold; font-size: 16pt; color: #0f766e; border: 1px solid #0d9488; text-align: center; margin-bottom: 20px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+            th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; }
+            th { background-color: #f8fafc; }
+          </style>
+        </head>
+        <body>
+          <h1>Product Batch Record</h1>
+          <div class="header-info">
+            <strong>Issued By:</strong> Dr. Bilal Ahmed (bilalktk969@gmail.com | 03473880610)<br>
+            <strong>Pharma Factory:</strong> ${sessionData.pharmaName}<br>
+            <strong>Contact Phone:</strong> ${sessionData.phoneNumber}<br>
+            <strong>Date Generated:</strong> ${sessionData.timestamp}
+          </div>
+
+          <div class="id-box">
+            Unique ID: ${generatedID}
+          </div>
+
+          <h3>Batch Specifications</h3>
+          <table>
+            <tr><th>Product Name</th><td>${sessionData.productName}</td></tr>
+            <tr><th>Batch Number</th><td>${sessionData.batchNumber}</td></tr>
+            <tr><th>Strength</th><td>${sessionData.strength}</td></tr>
+            <tr><th>Primary Packaging Length</th><td>${sessionData.primaryLength}</td></tr>
+            <tr><th>Secondary Packaging Length</th><td>${sessionData.secondaryLength}</td></tr>
+          </table>
+
+          <br><br>
+          <h3>Scannable 2D Barcode Code</h3>
+          <img src="${qrDataUrl}" width="150" height="150" alt="2D Code" />
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Batch_${sessionData.batchNumber || 'Record'}_Unique_ID.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // EXPORT COMPLETE BACKEND AUDIT LOG TO WORD (.DOC)
+    function exportAuditLogToWord() {
+      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
+      let rowsHtml = "";
+
+      logs.forEach(log => {
+        rowsHtml += `
+          <tr>
+            <td>${log.timestamp}</td>
+            <td>${log.pharmaName}</td>
+            <td>${log.phoneNumber}</td>
+            <td>${log.productName}</td>
+            <td>${log.batchNumber}</td>
+            <td>${log.strength}</td>
+            <td>${log.uniqueID}</td>
+          </tr>
+        `;
+      });
+
+      const content = `
+        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+        <head>
+          <meta charset='utf-8'>
+          <title>Master Audit Log - Dr. Bilal Ahmed</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            h1 { color: #0f766e; }
+            table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10pt; }
+            th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; }
+            th { background-color: #f1f5f9; }
+          </style>
+        </head>
+        <body>
+          <h1>Master Batch Entry Audit Log</h1>
+          <p><strong>System Owner:</strong> Dr. Bilal Ahmed (bilalktk969@gmail.com | 03473880610)</p>
+          <p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
+          <table>
+            <thead>
+              <tr>
+                <th>Timestamp</th>
+                <th>Pharma Name</th>
+                <th>Phone</th>
+                <th>Product</th>
+                <th>Batch</th>
+                <th>Strength</th>
+                <th>Unique ID</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob(['\ufeff', content], { type: 'application/msword' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Master_Audit_Log_${Date.now()}.doc`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+
+    // RESET ALL SHEETS
+    function resetAllSheets() {
+      document.getElementById('auth-form').reset();
+      document.getElementById('specs-form').reset();
+      switchSubTab('subtab-product');
+      goToSheet(1);
+    }
+  </script>
+</body>
+</html>
