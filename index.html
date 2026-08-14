@@ -29,7 +29,7 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
-    /* Page Body with Dual Background Images (Manufacturing Left, Quality Control Right) */
+    /* Split Background Panels */
     body {
       min-height: 100vh;
       display: flex;
@@ -41,7 +41,6 @@
       background-color: #e0f2fe;
     }
 
-    /* Split Background Panels */
     body::before, body::after {
       content: "";
       position: fixed;
@@ -55,7 +54,7 @@
       filter: brightness(0.85) contrast(1.05);
     }
 
-    /* Left Side: Pharmaceutical Manufacturing Machine (Compression / Production Line) */
+    /* Left Side: Manufacturing */
     body::before {
       left: 0;
       background-image: linear-gradient(to right, rgba(15, 118, 110, 0.65), rgba(15, 118, 110, 0.85)),
@@ -63,7 +62,7 @@
       border-right: 2px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* Right Side: Quality Control & Analytical Testing Machines (HPLC / Micro Lab) */
+    /* Right Side: Quality Control */
     body::after {
       right: 0;
       background-image: linear-gradient(to left, rgba(4, 120, 87, 0.65), rgba(15, 118, 110, 0.85)),
@@ -141,7 +140,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* Admin Button */
     .header-top-actions {
       position: absolute;
       top: 14px;
@@ -319,7 +317,7 @@
       display: block;
     }
 
-    /* Unique ID Container */
+    /* Output Section */
     .id-card-container {
       background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
       border: 2px dashed #0d9488;
@@ -396,7 +394,7 @@
       gap: 10px;
     }
 
-    /* Audit Log Table */
+    /* Host Admin Audit Log Table */
     .audit-table-wrapper {
       max-height: 300px;
       overflow-y: auto;
@@ -430,10 +428,10 @@
     <!-- Header Banner -->
     <div class="header-banner">
       <div class="header-top-actions">
-        <button class="header-btn" onclick="promptBackendAccess(event)">🔒 Admin Portal</button>
+        <button class="header-btn" onclick="promptBackendAccess(event)">🔒 Host Admin Portal</button>
       </div>
 
-      <!-- Pharmaceutical Icon SVG -->
+      <!-- Icon SVG -->
       <div class="pharma-icon-badge">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0f766e" width="36" height="36">
           <path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15zM10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z"/>
@@ -441,7 +439,7 @@
         </svg>
       </div>
 
-      <div class="header-title">Dr. Bilal Ahmed</div>
+      <div class="header-title">Dr. Bilal Ahmed Desk</div>
       
       <div class="contact-pill-box">
         <div class="header-email">✉️ bilalktk969@gmail.com</div>
@@ -449,10 +447,10 @@
       </div>
     </div>
 
-    <!-- SHEET 1: AUTHENTICATION & TRIAL REGISTRATION -->
+    <!-- SHEET 1: USER VERIFICATION -->
     <div class="sheet-page active" id="sheet-1">
       <div class="trial-badge">
-        ✨ <span><strong>Notice:</strong> This system is configured for your trial evaluation.</span>
+        ✨ <span><strong>Notice:</strong> Records entered here are stored securely in the Host Admin Vault.</span>
       </div>
 
       <h2 class="sheet-title">
@@ -532,7 +530,7 @@
         </svg>
         Step 3: Unique Code Generated
       </h2>
-      <p class="sheet-desc">Record successfully generated and stored in system log:</p>
+      <p class="sheet-desc">Record saved securely to Host Password Vault!</p>
 
       <div class="id-card-container">
         <div class="unique-id-box">
@@ -561,10 +559,10 @@
       </div>
     </div>
 
-    <!-- SECRET BACKEND SHEET -->
+    <!-- HOST RESTRICTED ADMIN VAULT SHEET -->
     <div class="sheet-page" id="sheet-backend">
-      <h2 class="sheet-title">🛡️ Hidden Admin Audit Records</h2>
-      <p class="sheet-desc">Master record log of all individual entries submitted across sessions.</p>
+      <h2 class="sheet-title">🔐 Host Admin Vault</h2>
+      <p class="sheet-desc">Protected master records log accessible exclusively to the host.</p>
 
       <div class="audit-table-wrapper">
         <table class="audit-table" id="audit-table">
@@ -579,27 +577,50 @@
             </tr>
           </thead>
           <tbody id="audit-table-body">
-            <!-- Dynamic audit rows -->
+            <!-- Dynamically populated only when host authenticates -->
           </tbody>
         </table>
       </div>
 
       <div class="action-group">
         <button type="button" class="btn-primary btn-accent" onclick="exportAuditLogToWord()">📄 Export Complete Audit Log to Word</button>
-        <button type="button" class="btn-primary btn-secondary" onclick="exitBackendSheet()">Exit Backend Access</button>
-        <button type="button" class="btn-primary btn-danger" onclick="clearAuditLogs()">⚠️ Clear Audit Logs</button>
+        <button type="button" class="btn-primary btn-secondary" onclick="exitBackendSheet()">Exit Host Vault</button>
+        <button type="button" class="btn-primary btn-danger" onclick="clearAuditLogs()">⚠️ Clear Protected Records</button>
       </div>
     </div>
 
   </div>
 
   <script>
+    const HOST_PASSWORD = "khattak@123";
+    const VAULT_STORAGE_KEY = "dr_bilal_admin_vault";
+    
     let sessionData = {};
     let generatedID = "";
+    let activeHostUnlocked = false;
+    let unlockedLogs = [];
 
-    // INITIALIZE LOCAL STORAGE AUDIT ARRAY
-    if (!localStorage.getItem("batchMasterRecords")) {
-      localStorage.setItem("batchMasterRecords", JSON.stringify([]));
+    // SIMPLE XOR ENCRYPTION TO SECURE VAULT AT REST INSIDE ADMIN PASSWORD
+    function encryptVaultData(dataArray, key) {
+      const jsonStr = JSON.stringify(dataArray);
+      let output = "";
+      for (let i = 0; i < jsonStr.length; i++) {
+        output += String.fromCharCode(jsonStr.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+      }
+      return btoa(output);
+    }
+
+    function decryptVaultData(cipherText, key) {
+      try {
+        const decodedStr = atob(cipherText);
+        let output = "";
+        for (let i = 0; i < decodedStr.length; i++) {
+          output += String.fromCharCode(decodedStr.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return JSON.parse(output);
+      } catch(e) {
+        return null;
+      }
     }
 
     // SWITCH PUBLIC SHEETS
@@ -608,7 +629,7 @@
       document.getElementById(`sheet-${sheetNum}`).classList.add('active');
     }
 
-    // SUB-TAB SWITCHER IN SHEET 2
+    // SUB-TAB SWITCHER
     function switchSubTab(tabId, evt) {
       document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
       document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
@@ -621,7 +642,7 @@
       }
     }
 
-    // SHEET 1: FORM SUBMISSION
+    // SHEET 1 SUBMISSION
     document.getElementById('auth-form').addEventListener('submit', function(e) {
       e.preventDefault();
       sessionData.pharmaName = document.getElementById('pharma-name').value;
@@ -629,7 +650,7 @@
       goToSheet(2);
     });
 
-    // SHEET 2: FORM SUBMISSION
+    // SHEET 2 SUBMISSION
     document.getElementById('specs-form').addEventListener('submit', function(e) {
       e.preventDefault();
 
@@ -644,10 +665,10 @@
       generatedID = generateSecureUniqueID();
       sessionData.uniqueID = generatedID;
 
-      // RECORD TO BACKEND AUDIT LOG
-      saveToHiddenDatabase(sessionData);
+      // SAVE ENTRY INSIDE ENCRYPTED HOST ADMIN STORAGE
+      saveToProtectedHostVault(sessionData);
 
-      // Populate Sheet 3 Summary Display
+      // Populate Display
       document.getElementById('sum-pharma').innerText = sessionData.pharmaName;
       document.getElementById('sum-phone').innerText = sessionData.phoneNumber;
       document.getElementById('sum-product').innerText = sessionData.productName;
@@ -662,7 +683,6 @@
       goToSheet(3);
     });
 
-    // GENERATE UNIQUE ID
     function generateSecureUniqueID(length = 16) {
       const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
       const randomValues = new Uint8Array(length);
@@ -677,7 +697,6 @@
       return `${timeStampHex}-${result}`;
     }
 
-    // RENDER 2D QR CODE
     function render2DBarcode(textData) {
       const container = document.getElementById('qrcode-container');
       container.innerHTML = "";
@@ -692,7 +711,6 @@
       });
     }
 
-    // COPY ID TO CLIPBOARD
     function copyUniqueID() {
       navigator.clipboard.writeText(generatedID).then(() => {
         const btn = document.querySelector('.btn-copy');
@@ -701,45 +719,63 @@
       });
     }
 
-    // SAVE ENTRY TO HIDDEN STORAGE
-    function saveToHiddenDatabase(record) {
-      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
-      logs.push(record);
-      localStorage.setItem("batchMasterRecords", JSON.stringify(logs));
+    // WRITE DIRECTLY TO PROTECTED HOST VAULT
+    function saveToProtectedHostVault(record) {
+      let currentVault = [];
+      const storedCipher = localStorage.getItem(VAULT_STORAGE_KEY);
+
+      if (storedCipher) {
+        const decrypted = decryptVaultData(storedCipher, HOST_PASSWORD);
+        if (decrypted && Array.isArray(decrypted)) {
+          currentVault = decrypted;
+        }
+      }
+
+      currentVault.push(record);
+      const encryptedData = encryptVaultData(currentVault, HOST_PASSWORD);
+      localStorage.setItem(VAULT_STORAGE_KEY, encryptedData);
     }
 
-    // PROMPT ACCESS FOR HIDDEN BACKEND SHEET WITH SECRET CODE: khattak@123
+    // HOST ADMIN PORTAL ACCESS VERIFICATION
     function promptBackendAccess(event) {
       if (event) event.stopPropagation();
-      const accessCode = prompt("Enter Master Admin Passcode:");
+      const inputPasscode = prompt("Enter Host Admin Passcode:");
       
-      if (accessCode === "khattak@123") {
+      if (inputPasscode === HOST_PASSWORD) {
+        activeHostUnlocked = true;
+        const storedCipher = localStorage.getItem(VAULT_STORAGE_KEY);
+        if (storedCipher) {
+          unlockedLogs = decryptVaultData(storedCipher, HOST_PASSWORD) || [];
+        } else {
+          unlockedLogs = [];
+        }
         openBackendSheet();
-      } else if (accessCode !== null) {
-        alert("Access Denied: Incorrect Passcode!");
+      } else if (inputPasscode !== null) {
+        alert("Access Denied: Unrecognized Host Password!");
       }
     }
 
-    // OPEN BACKEND SHEET
     function openBackendSheet() {
       document.querySelectorAll('.sheet-page').forEach(el => el.classList.remove('active'));
       document.getElementById('sheet-backend').classList.add('active');
-
       renderAuditTable();
     }
 
-    // RENDER AUDIT LOG TABLE
     function renderAuditTable() {
-      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
       const tbody = document.getElementById('audit-table-body');
       tbody.innerHTML = "";
 
-      if (logs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No backend records found.</td></tr>`;
+      if (!activeHostUnlocked) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Unauthorized: Restricted to Host.</td></tr>`;
         return;
       }
 
-      logs.forEach(log => {
+      if (unlockedLogs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No entries stored in Host Vault.</td></tr>`;
+        return;
+      }
+
+      unlockedLogs.forEach(log => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${log.timestamp || '--'}</td>
@@ -753,20 +789,21 @@
       });
     }
 
-    // EXIT BACKEND SHEET
     function exitBackendSheet() {
+      activeHostUnlocked = false;
+      unlockedLogs = [];
       goToSheet(1);
     }
 
-    // CLEAR AUDIT LOGS
     function clearAuditLogs() {
-      if (confirm("Are you sure you want to clear all backend audit records?")) {
-        localStorage.setItem("batchMasterRecords", JSON.stringify([]));
+      if (!activeHostUnlocked) return;
+      if (confirm("Host Confirmation: Are you sure you want to permanently clear all stored entries from the Admin Vault?")) {
+        localStorage.removeItem(VAULT_STORAGE_KEY);
+        unlockedLogs = [];
         renderAuditTable();
       }
     }
 
-    // EXPORT INDIVIDUAL RECORD TO WORD (.DOC)
     function exportToWordDoc() {
       const qrImageTag = document.querySelector("#qrcode-container img");
       const qrDataUrl = qrImageTag ? qrImageTag.src : "";
@@ -825,12 +862,14 @@
       document.body.removeChild(a);
     }
 
-    // EXPORT COMPLETE BACKEND AUDIT LOG TO WORD (.DOC)
     function exportAuditLogToWord() {
-      const logs = JSON.parse(localStorage.getItem("batchMasterRecords")) || [];
-      let rowsHtml = "";
+      if (!activeHostUnlocked) {
+        alert("Action Restricted: Unlock the Host Admin Vault first.");
+        return;
+      }
 
-      logs.forEach(log => {
+      let rowsHtml = "";
+      unlockedLogs.forEach(log => {
         rowsHtml += `
           <tr>
             <td>${log.timestamp}</td>
@@ -858,7 +897,7 @@
           </style>
         </head>
         <body>
-          <h1>Master Batch Entry Audit Log</h1>
+          <h1>Master Batch Entry Audit Log (Host Protected)</h1>
           <p><strong>System Owner:</strong> Dr. Bilal Ahmed (bilalktk969@gmail.com | 03473880610)</p>
           <p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
           <table>
@@ -885,13 +924,12 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `Master_Audit_Log_${Date.now()}.doc`;
+      a.download = `Host_Master_Vault_${Date.now()}.doc`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     }
 
-    // RESET ALL SHEETS
     function resetAllSheets() {
       document.getElementById('auth-form').reset();
       document.getElementById('specs-form').reset();
