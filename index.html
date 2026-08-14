@@ -600,27 +600,6 @@
     let activeHostUnlocked = false;
     let unlockedLogs = [];
 
-    // VERCEL SERVERLESS RUNTIME LOG TRANSMITTER
-    async function sendLogToServer(actionDetails) {
-      try {
-        await fetch('/api/log', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: actionDetails,
-            time: new Date().toISOString()
-          })
-        });
-      } catch (err) {
-        console.warn("Unable to send log to Vercel API endpoint:", err);
-      }
-    }
-
-    // Log initial page visit automatically
-    window.addEventListener('DOMContentLoaded', () => {
-      sendLogToServer('User visited Batch Manager application');
-    });
-
     // SIMPLE XOR ENCRYPTION TO SECURE VAULT AT REST INSIDE ADMIN PASSWORD
     function encryptVaultData(dataArray, key) {
       const jsonStr = JSON.stringify(dataArray);
@@ -668,7 +647,6 @@
       e.preventDefault();
       sessionData.pharmaName = document.getElementById('pharma-name').value;
       sessionData.phoneNumber = document.getElementById('phone-number').value;
-      sendLogToServer(`User verification completed: ${sessionData.pharmaName}`);
       goToSheet(2);
     });
 
@@ -689,16 +667,6 @@
 
       // SAVE ENTRY INSIDE ENCRYPTED HOST ADMIN STORAGE
       saveToProtectedHostVault(sessionData);
-
-      // Transmit batch creation details directly to Vercel Server Logs
-      sendLogToServer({
-        event: 'New Batch Form Submitted',
-        pharmaName: sessionData.pharmaName,
-        phoneNumber: sessionData.phoneNumber,
-        productName: sessionData.productName,
-        batchNumber: sessionData.batchNumber,
-        uniqueID: generatedID
-      });
 
       // Populate Display
       document.getElementById('sum-pharma').innerText = sessionData.pharmaName;
@@ -747,7 +715,6 @@
       navigator.clipboard.writeText(generatedID).then(() => {
         const btn = document.querySelector('.btn-copy');
         btn.innerText = "✅ Copied!";
-        sendLogToServer(`Copied Unique ID: ${generatedID}`);
         setTimeout(() => { btn.innerText = "📋 Copy ID"; }, 2000);
       });
     }
@@ -776,7 +743,6 @@
       
       if (inputPasscode === HOST_PASSWORD) {
         activeHostUnlocked = true;
-        sendLogToServer("Host Admin Vault successfully unlocked");
         const storedCipher = localStorage.getItem(VAULT_STORAGE_KEY);
         if (storedCipher) {
           unlockedLogs = decryptVaultData(storedCipher, HOST_PASSWORD) || [];
@@ -785,7 +751,6 @@
         }
         openBackendSheet();
       } else if (inputPasscode !== null) {
-        sendLogToServer("Failed authentication attempt on Host Admin Vault");
         alert("Access Denied: Unrecognized Host Password!");
       }
     }
@@ -835,13 +800,11 @@
       if (confirm("Host Confirmation: Are you sure you want to permanently clear all stored entries from the Admin Vault?")) {
         localStorage.removeItem(VAULT_STORAGE_KEY);
         unlockedLogs = [];
-        sendLogToServer("Cleared Protected Records in Admin Vault");
         renderAuditTable();
       }
     }
 
     function exportToWordDoc() {
-      sendLogToServer(`Exported Word Document for Batch: ${sessionData.batchNumber}`);
       const qrImageTag = document.querySelector("#qrcode-container img");
       const qrDataUrl = qrImageTag ? qrImageTag.src : "";
 
@@ -904,8 +867,6 @@
         alert("Action Restricted: Unlock the Host Admin Vault first.");
         return;
       }
-
-      sendLogToServer("Exported Complete Master Audit Log to Word");
 
       let rowsHtml = "";
       unlockedLogs.forEach(log => {
@@ -976,14 +937,5 @@
       goToSheet(1);
     }
   </script>
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyDf4DZfL3oI9i0Sw7BehUv2nwhflSTzIpE",
-  authDomain: "tracking-system-91c0e.firebaseapp.com",
-  projectId: "tracking-system-91c0e",
-  storageBucket: "tracking-system-91c0e.firebasestorage.app",
-  messagingSenderId: "306904487163",
-  appId: "1:306904487163:web:fb74428a66460734778c5e",
-  measurementId: "G-YCDR469KMB"
-};</body>
+</body>
 </html>
