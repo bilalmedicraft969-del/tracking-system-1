@@ -4,8 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Batch Manager - Dr. Bilal Ahmed</title>
-  <!-- QRCode.js library for 2D barcode generation -->
+
+  <!-- QRCode.js Library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- Firebase SDKs (v9 Compat Mode for Vanilla HTML) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <style>
     :root {
       --primary-teal: #0f766e;
@@ -29,7 +35,6 @@
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
-    /* Split Background Panels */
     body {
       min-height: 100vh;
       display: flex;
@@ -54,7 +59,6 @@
       filter: brightness(0.85) contrast(1.05);
     }
 
-    /* Left Side: Manufacturing */
     body::before {
       left: 0;
       background-image: linear-gradient(to right, rgba(15, 118, 110, 0.65), rgba(15, 118, 110, 0.85)),
@@ -62,7 +66,6 @@
       border-right: 2px solid rgba(255, 255, 255, 0.3);
     }
 
-    /* Right Side: Quality Control */
     body::after {
       right: 0;
       background-image: linear-gradient(to left, rgba(4, 120, 87, 0.65), rgba(15, 118, 110, 0.85)),
@@ -82,7 +85,6 @@
       backdrop-filter: blur(8px);
     }
 
-    /* Header Banner */
     .header-banner {
       background: linear-gradient(180deg, rgba(15, 118, 110, 0.92) 0%, rgba(4, 120, 87, 0.95) 100%),
                   url('https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=1000&q=80') center/cover no-repeat;
@@ -163,7 +165,6 @@
       background: rgba(0, 0, 0, 0.55);
     }
 
-    /* Trial Info Notice */
     .trial-badge {
       background-color: #f0fdf4;
       border: 1px solid #a7f3d0;
@@ -178,7 +179,6 @@
       gap: 8px;
     }
 
-    /* Sheet Containers */
     .sheet-page {
       padding: 30px;
       display: none;
@@ -285,7 +285,6 @@
       margin-top: 10px;
     }
 
-    /* Sub Tabs */
     .tab-nav {
       display: flex;
       gap: 10px;
@@ -317,7 +316,6 @@
       display: block;
     }
 
-    /* Output Section */
     .id-card-container {
       background: linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%);
       border: 2px dashed #0d9488;
@@ -394,7 +392,6 @@
       gap: 10px;
     }
 
-    /* Host Admin Audit Log Table */
     .audit-table-wrapper {
       max-height: 300px;
       overflow-y: auto;
@@ -428,10 +425,9 @@
     <!-- Header Banner -->
     <div class="header-banner">
       <div class="header-top-actions">
-        <button class="header-btn" onclick="promptBackendAccess(event)">🔒 Host Admin Portal</button>
+        <button class="header-btn" onclick="promptBackendAccess(event)">🔒 Host Admin Vault</button>
       </div>
 
-      <!-- Icon SVG -->
       <div class="pharma-icon-badge">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="#0f766e" width="36" height="36">
           <path d="M4.5 10.5C3.67 10.5 3 11.17 3 12s.67 1.5 1.5 1.5h15c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5h-15zM10.5 4.5C10.5 3.67 11.17 3 12 3s1.5.67 1.5 1.5v15c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-15z"/>
@@ -450,7 +446,7 @@
     <!-- SHEET 1: USER VERIFICATION -->
     <div class="sheet-page active" id="sheet-1">
       <div class="trial-badge">
-        ✨ <span><strong>Notice:</strong> Records entered here are stored securely in the Host Admin Vault.</span>
+        ✨ <span><strong>Cloud Synced:</strong> Records entered here are stored securely in Firebase Firestore.</span>
       </div>
 
       <h2 class="sheet-title">
@@ -517,7 +513,7 @@
             <label for="secondary-length">Length of Secondary Packaging (mm)</label>
             <input type="number" step="0.1" id="secondary-length" placeholder="e.g. 110.0" required />
           </div>
-          <button type="submit" class="btn-primary btn-accent">Proceed Next ➔</button>
+          <button type="submit" class="btn-primary btn-accent" id="submit-btn">Proceed Next ➔</button>
         </div>
       </form>
     </div>
@@ -530,7 +526,7 @@
         </svg>
         Step 3: Unique Code Generated
       </h2>
-      <p class="sheet-desc">Record saved securely to Host Password Vault!</p>
+      <p class="sheet-desc">Record saved securely to Firebase Cloud!</p>
 
       <div class="id-card-container">
         <div class="unique-id-box">
@@ -561,8 +557,8 @@
 
     <!-- HOST RESTRICTED ADMIN VAULT SHEET -->
     <div class="sheet-page" id="sheet-backend">
-      <h2 class="sheet-title">🔐 Host Admin Vault</h2>
-      <p class="sheet-desc">Protected master records log accessible exclusively to the host.</p>
+      <h2 class="sheet-title">🔐 Firebase Cloud Vault</h2>
+      <p class="sheet-desc">Protected master records fetched live from Firebase Cloud Firestore.</p>
 
       <div class="audit-table-wrapper">
         <table class="audit-table" id="audit-table">
@@ -577,7 +573,7 @@
             </tr>
           </thead>
           <tbody id="audit-table-body">
-            <!-- Dynamically populated only when host authenticates -->
+            <!-- Dynamically populated from Firestore -->
           </tbody>
         </table>
       </div>
@@ -585,43 +581,39 @@
       <div class="action-group">
         <button type="button" class="btn-primary btn-accent" onclick="exportAuditLogToWord()">📄 Export Complete Audit Log to Word</button>
         <button type="button" class="btn-primary btn-secondary" onclick="exitBackendSheet()">Exit Host Vault</button>
-        <button type="button" class="btn-primary btn-danger" onclick="clearAuditLogs()">⚠️ Clear Protected Records</button>
+        <button type="button" class="btn-primary btn-danger" onclick="clearAuditLogs()">⚠️ Clear Protected Cloud Records</button>
       </div>
     </div>
 
   </div>
 
   <script>
+    // ==========================================
+    // FIREBASE CONFIGURATION
+    // Replace with your Firebase Console Project Settings values
+    // ==========================================
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    if (!firebase.apps.length) {
+      firebase.initializeApp(firebaseConfig);
+    }
+    const db = firebase.firestore();
+
+    // Host Settings
     const HOST_PASSWORD = "khattak@123";
-    const VAULT_STORAGE_KEY = "dr_bilal_admin_vault";
     
     let sessionData = {};
     let generatedID = "";
     let activeHostUnlocked = false;
     let unlockedLogs = [];
-
-    // SIMPLE XOR ENCRYPTION TO SECURE VAULT AT REST INSIDE ADMIN PASSWORD
-    function encryptVaultData(dataArray, key) {
-      const jsonStr = JSON.stringify(dataArray);
-      let output = "";
-      for (let i = 0; i < jsonStr.length; i++) {
-        output += String.fromCharCode(jsonStr.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-      }
-      return btoa(output);
-    }
-
-    function decryptVaultData(cipherText, key) {
-      try {
-        const decodedStr = atob(cipherText);
-        let output = "";
-        for (let i = 0; i < decodedStr.length; i++) {
-          output += String.fromCharCode(decodedStr.charCodeAt(i) ^ key.charCodeAt(i % key.length));
-        }
-        return JSON.parse(output);
-      } catch(e) {
-        return null;
-      }
-    }
 
     // SWITCH PUBLIC SHEETS
     function goToSheet(sheetNum) {
@@ -651,8 +643,12 @@
     });
 
     // SHEET 2 SUBMISSION
-    document.getElementById('specs-form').addEventListener('submit', function(e) {
+    document.getElementById('specs-form').addEventListener('submit', async function(e) {
       e.preventDefault();
+
+      const submitBtn = document.getElementById('submit-btn');
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Saving to Cloud...";
 
       sessionData.productName = document.getElementById('product-name').value;
       sessionData.batchNumber = document.getElementById('batch-number').value;
@@ -660,27 +656,36 @@
       sessionData.primaryLength = document.getElementById('primary-length').value + " mm";
       sessionData.secondaryLength = document.getElementById('secondary-length').value + " mm";
       sessionData.timestamp = new Date().toLocaleString();
+      sessionData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
 
       // Generate Cryptographic Unique ID
       generatedID = generateSecureUniqueID();
       sessionData.uniqueID = generatedID;
 
-      // SAVE ENTRY INSIDE ENCRYPTED HOST ADMIN STORAGE
-      saveToProtectedHostVault(sessionData);
+      try {
+        // SAVE ENTRY TO FIREBASE FIRESTORE
+        await db.collection("batch_records").add(sessionData);
 
-      // Populate Display
-      document.getElementById('sum-pharma').innerText = sessionData.pharmaName;
-      document.getElementById('sum-phone').innerText = sessionData.phoneNumber;
-      document.getElementById('sum-product').innerText = sessionData.productName;
-      document.getElementById('sum-batch').innerText = sessionData.batchNumber;
-      document.getElementById('sum-strength').innerText = sessionData.strength;
-      document.getElementById('sum-primary').innerText = sessionData.primaryLength;
-      document.getElementById('sum-secondary').innerText = sessionData.secondaryLength;
+        // Populate Display
+        document.getElementById('sum-pharma').innerText = sessionData.pharmaName;
+        document.getElementById('sum-phone').innerText = sessionData.phoneNumber;
+        document.getElementById('sum-product').innerText = sessionData.productName;
+        document.getElementById('sum-batch').innerText = sessionData.batchNumber;
+        document.getElementById('sum-strength').innerText = sessionData.strength;
+        document.getElementById('sum-primary').innerText = sessionData.primaryLength;
+        document.getElementById('sum-secondary').innerText = sessionData.secondaryLength;
 
-      document.getElementById('final-unique-id').innerText = generatedID;
-      render2DBarcode(generatedID);
+        document.getElementById('final-unique-id').innerText = generatedID;
+        render2DBarcode(generatedID);
 
-      goToSheet(3);
+        goToSheet(3);
+      } catch (error) {
+        console.error("Error saving to Firebase:", error);
+        alert("Firebase Cloud Error: Failed to save record. Please check your network or configuration.");
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Proceed Next ➔";
+      }
     });
 
     function generateSecureUniqueID(length = 16) {
@@ -719,39 +724,30 @@
       });
     }
 
-    // WRITE DIRECTLY TO PROTECTED HOST VAULT
-    function saveToProtectedHostVault(record) {
-      let currentVault = [];
-      const storedCipher = localStorage.getItem(VAULT_STORAGE_KEY);
-
-      if (storedCipher) {
-        const decrypted = decryptVaultData(storedCipher, HOST_PASSWORD);
-        if (decrypted && Array.isArray(decrypted)) {
-          currentVault = decrypted;
-        }
-      }
-
-      currentVault.push(record);
-      const encryptedData = encryptVaultData(currentVault, HOST_PASSWORD);
-      localStorage.setItem(VAULT_STORAGE_KEY, encryptedData);
-    }
-
     // HOST ADMIN PORTAL ACCESS VERIFICATION
-    function promptBackendAccess(event) {
+    async function promptBackendAccess(event) {
       if (event) event.stopPropagation();
       const inputPasscode = prompt("Enter Host Admin Passcode:");
       
       if (inputPasscode === HOST_PASSWORD) {
         activeHostUnlocked = true;
-        const storedCipher = localStorage.getItem(VAULT_STORAGE_KEY);
-        if (storedCipher) {
-          unlockedLogs = decryptVaultData(storedCipher, HOST_PASSWORD) || [];
-        } else {
-          unlockedLogs = [];
-        }
+        await fetchCloudLogs();
         openBackendSheet();
       } else if (inputPasscode !== null) {
         alert("Access Denied: Unrecognized Host Password!");
+      }
+    }
+
+    async function fetchCloudLogs() {
+      unlockedLogs = [];
+      try {
+        const snapshot = await db.collection("batch_records").orderBy("createdAt", "desc").get();
+        snapshot.forEach(doc => {
+          unlockedLogs.push({ id: doc.id, ...doc.data() });
+        });
+      } catch (error) {
+        console.error("Firestore fetch error:", error);
+        alert("Failed to fetch records from Firebase.");
       }
     }
 
@@ -771,7 +767,7 @@
       }
 
       if (unlockedLogs.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No entries stored in Host Vault.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No entries stored in Cloud Vault.</td></tr>`;
         return;
       }
 
@@ -795,12 +791,23 @@
       goToSheet(1);
     }
 
-    function clearAuditLogs() {
+    async function clearAuditLogs() {
       if (!activeHostUnlocked) return;
-      if (confirm("Host Confirmation: Are you sure you want to permanently clear all stored entries from the Admin Vault?")) {
-        localStorage.removeItem(VAULT_STORAGE_KEY);
-        unlockedLogs = [];
-        renderAuditTable();
+      if (confirm("Host Confirmation: Are you sure you want to PERMANENTLY delete all records from Firebase Firestore?")) {
+        try {
+          const snapshot = await db.collection("batch_records").get();
+          const batch = db.batch();
+          snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+          });
+          await batch.commit();
+          unlockedLogs = [];
+          renderAuditTable();
+          alert("All Cloud Vault records cleared.");
+        } catch (error) {
+          console.error("Delete error:", error);
+          alert("Error clearing cloud records.");
+        }
       }
     }
 
@@ -872,13 +879,13 @@
       unlockedLogs.forEach(log => {
         rowsHtml += `
           <tr>
-            <td>${log.timestamp}</td>
-            <td>${log.pharmaName}</td>
-            <td>${log.phoneNumber}</td>
-            <td>${log.productName}</td>
-            <td>${log.batchNumber}</td>
-            <td>${log.strength}</td>
-            <td>${log.uniqueID}</td>
+            <td>${log.timestamp || '--'}</td>
+            <td>${log.pharmaName || '--'}</td>
+            <td>${log.phoneNumber || '--'}</td>
+            <td>${log.productName || '--'}</td>
+            <td>${log.batchNumber || '--'}</td>
+            <td>${log.strength || '--'}</td>
+            <td>${log.uniqueID || '--'}</td>
           </tr>
         `;
       });
@@ -897,7 +904,7 @@
           </style>
         </head>
         <body>
-          <h1>Master Batch Entry Audit Log (Host Protected)</h1>
+          <h1>Master Batch Entry Audit Log (Firebase Cloud Vault)</h1>
           <p><strong>System Owner:</strong> Dr. Bilal Ahmed (bilalktk969@gmail.com | 03473880610)</p>
           <p><strong>Export Date:</strong> ${new Date().toLocaleString()}</p>
           <table>
